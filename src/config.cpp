@@ -10,7 +10,9 @@ namespace service::config {
 
 class Config::Impl {
 public:
-    explicit Impl(std::fstream& fs) : fs_(fs) { }
+    explicit Impl(std::fstream& fs) : fs_(fs) {
+        ReadStream();
+    }
     
     ~Impl() = default;
     
@@ -21,6 +23,10 @@ public:
     Impl& operator=(Impl&&) noexcept = delete;
     
     void ReadStream() {
+        if (!fs_.is_open() && is_loaded_) {
+            return;
+        }
+
         json data_ = json::parse(fs_);
         body_ = ConfigBody(
             data_["hmac_alg"].get<std::string>(),
@@ -29,6 +35,7 @@ public:
             data_["max_msg_size_bytes"].get<uint32_t>(),
             base64_encode(data_["secret"].get<std::string>())
         );
+        fs_.close();
     }
     
     std::string GetAlg() const { return body_.hmac_algo_; }
@@ -57,11 +64,12 @@ private:
     
     using json = nlohmann::json;
     
-    ConfigBody body_{"", "", "", 0, ""};
+    ConfigBody body_{{}, {}, {}, {}, {}};
+    bool is_loaded_ = false;
     std::fstream& fs_;
     
     static std::string base64_encode(const std::string& input) {
-        if (input.empty()) return "";
+        if (input.empty()) return {};
         
         BIO* b64 = BIO_new(BIO_f_base64());
         BIO* mem = BIO_new(BIO_s_mem());
