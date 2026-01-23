@@ -1,37 +1,80 @@
 #pragma once
-#include <openssl/hmac.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <sstream>
-
 
 namespace service::codec {
 
-struct EncodeResult {
-    unsigned char * sig;
-    unsigned int len;
-};
+
 
 class Codec {
 public:
-    static EncodeResult Encode(std::string data, const std::string& secret) {
-        unsigned int len=0;
-        unsigned char out[EVP_MAX_MD_SIZE];
+  static std::string ToBase64Url(const std::string &input) {
+    if (input.empty())
+      return {};
 
-        return {HMAC(EVP_sha256(),
-            secret.c_str(),
-            static_cast<int>(data.length()),
-            reinterpret_cast<const unsigned char*>(data.c_str()),
-            static_cast<int>(data.size()), out, &len), len};
+    BIO *b64 = BIO_new(BIO_f_base64());
+    BIO *mem = BIO_new(BIO_s_mem());
+
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    BIO_push(b64, mem);
+
+    BIO_write(b64, input.data(), static_cast<int>(input.length()));
+    BIO_flush(b64);
+
+    BUF_MEM *bufferPtr;
+    BIO_get_mem_ptr(mem, &bufferPtr);
+
+    std::string result(bufferPtr->data, bufferPtr->length);
+    BIO_free_all(b64);
+
+    return result;
+  }
+
+  static std::string FromBase64Url(const std::string &input) {
+    BIO *b64 = BIO_new(BIO_f_base64());
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    BIO *bio = BIO_new_mem_buf(input.c_str(), input.length());
+    BIO_push(b64, bio);
+
+    BUF_MEM *bufferPtr;
+    BIO_get_mem_ptr(bio, &bufferPtr);
+
+    BIO *mem_bio = BIO_new(BIO_s_mem());
+    BIO_push(b64, mem_bio);
+
+    char decode_buffer[1024];
+    int decoded_len = 0;
+    std::string output;
+
+    while ((decoded_len = BIO_read(b64, decode_buffer, sizeof(decode_buffer))) >
+           0) {
+      output.append(decode_buffer, decoded_len);
     }
 
-    static std::string ToBase64Url(const unsigned char* sig, size_t len) {
-        std::string out(4 * ((len + 2) / 3), '\0');
-        int n = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(&out[0]), sig, static_cast<int>(len));
-        out.resize(n);
-        for (char& c : out) { if (c == '+') c = '-'; else if (c == '/') c = '_'; }
-        while (!out.empty() && out.back() == '=') out.pop_back();
-        return out;
+    BIO_free_all(b64);
+
+    return output;
+  }
+
+  static std::string SigToBase64Url(const unsigned char *sig, size_t len) {
+    std::string out(4 * ((len + 2) / 3), '\0');
+    int n = EVP_EncodeBlock(reinterpret_cast<unsigned char *>(&out[0]), sig,
+                            static_cast<int>(len));
+    out.resize(n);
+    for (char &c : out) {
+      if (c == '+')
+        c = '-';
+      else if (c == '/')
+        c = '_';
     }
+    while (!out.empty() && out.back() == '=')
+      out.pop_back();
+    return out;
+  }
+
 };
 
 } // namespace service::codec

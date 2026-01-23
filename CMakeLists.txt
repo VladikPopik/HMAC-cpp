@@ -15,6 +15,7 @@ include_directories(include)
 add_executable(hmac_service
         src/main.cpp
         src/config.cpp
+        src/http.cpp
 )
 
 target_link_libraries(hmac_service

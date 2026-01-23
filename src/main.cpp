@@ -1,41 +1,43 @@
-#include <iostream>
-#include <fstream>
-#include "hmac_service.hpp"
 #include "config.hpp"
+#include "http.hpp"
+#include "hmac_service.hpp"
+#include <fstream>
+#include <iostream>
 
 using namespace service::config;
 using namespace service::hmac;
+using namespace service::micro;
 
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cout << "Invalid args, please specify config file path" << "\n";
-        return 1;
-    }
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    std::cout << "Invalid args, please specify config file path" << "\n";
+    return 1;
+  }
 
-    std::string fpath = argv[1];
-    std::fstream fs(fpath);
+  std::string fpath = argv[1];
+  std::fstream fs(fpath);
 
-    Config config(fs);
+  Config config(fs);
 
-    // EncodeResult test = Codec::Encode("test", config.GetSecret());
-    // std::string test_decode = Codec::ToBase64Url(test.sig, test.len);
+  HmacService hmac(config.GetSecret());
 
-    // EncodeResult test2 = Codec::Encode("test", config.GetSecret());
-    // std::string test2_decode = Codec::ToBase64Url(test2.sig, test2.len);
+  std::string test = hmac.Sign("111");
+  std::string test2 = hmac.Sign("11111");
 
-    std::string test = HmacService::Sign("test", config.GetSecret());
-    std::string test2 = HmacService::Sign("test", config.GetSecret());
+  std::cout << hmac.Verify(std::move("test"), std::move(test)) << "\n";
+  std::cout << hmac.Verify(std::move("11111"), std::move(test2)) << "\n";
 
-    std::cout << test <<"\n";
-    std::cout << test2 << "\n";
+  std::cout << "Alg: " << config.GetAlg() << "\n";
+  std::cout << "Listen: " << config.GetListen() << "\n";
+  std::cout << "Log Level: " << config.GetLogLevel() << "\n";
+  std::cout << "Max Size: " << config.GetMaxSizeBytes() << "\n";
+  std::cout << "Secret: " << config.GetSecret() << "\n";
 
-    std::cout << HmacService::Verify(std::move(test2), std::move(test)) << "\n";
+    Service service(std::move(config.GetListen()));
 
-    std::cout << "Alg: " << config.GetAlg() << "\n";
-    std::cout << "Listen: " << config.GetListen() << "\n";
-    std::cout << "Log Level: " << config.GetLogLevel() << "\n";
-    std::cout << "Max Size: " << config.GetMaxSizeBytes() << "\n";
-    std::cout << "Secret: " << config.GetSecret() << "\n";
+    service.start();
 
-    return 0;
+    service.stop();
+
+  return 0;
 }
