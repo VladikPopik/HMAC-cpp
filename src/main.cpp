@@ -1,10 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include "codec.hpp"
+#include "hmac_service.hpp"
 #include "config.hpp"
 
 using namespace service::config;
-using namespace service::codec;
+using namespace service::hmac;
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -17,10 +17,19 @@ int main(int argc, char* argv[]) {
 
     Config config(fs);
 
-    EncodeResult test = Codec::Encode("test", config.GetSecret());
-    std::string test_decode = Codec::ToBase64Url(test.sig, test.len);
+    // EncodeResult test = Codec::Encode("test", config.GetSecret());
+    // std::string test_decode = Codec::ToBase64Url(test.sig, test.len);
 
-    std::cout << test_decode <<"\n";
+    // EncodeResult test2 = Codec::Encode("test", config.GetSecret());
+    // std::string test2_decode = Codec::ToBase64Url(test2.sig, test2.len);
+
+    std::string test = HmacService::Sign("test", config.GetSecret());
+    std::string test2 = HmacService::Sign("test", config.GetSecret());
+
+    std::cout << test <<"\n";
+    std::cout << test2 << "\n";
+
+    std::cout << HmacService::Verify(std::move(test2), std::move(test)) << "\n";
 
     std::cout << "Alg: " << config.GetAlg() << "\n";
     std::cout << "Listen: " << config.GetListen() << "\n";

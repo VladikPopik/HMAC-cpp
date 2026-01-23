@@ -26,7 +26,7 @@ public:
     std::string GetSecret() const;
 
 private:
-    class Impl;
+    struct Impl;
     
     std::unique_ptr<Impl> pImpl;
 };
