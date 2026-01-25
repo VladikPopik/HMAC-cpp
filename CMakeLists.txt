@@ -27,12 +27,12 @@ target_link_libraries(hmac_service
         nlohmann_json::nlohmann_json
 )
 
-add_executable(rotate_secret
+add_executable(rotate-secret
         src/rotate_secret/main.cpp
         src/rotate_secret/rotate.cpp
 )
 
-target_link_libraries(rotate_secret
+target_link_libraries(rotate-secret
         PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto

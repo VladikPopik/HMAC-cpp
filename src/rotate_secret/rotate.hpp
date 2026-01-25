@@ -6,6 +6,7 @@
 #include <random>
 #include <algorithm>
 #include <nlohmann/json.hpp>
+#include <ostream>
 
 
 namespace crypto {
@@ -14,7 +15,7 @@ using namespace service::hmac;
 
 class Rotate {
 public:
-    static void UpdateConfig(std::fstream& fs, std::string&& new_secret_str, uint64_t length);
+    static void UpdateConfig(const std::string& fpath, uint64_t length);
 
 private:
     using json = nlohmann::json;
@@ -36,12 +37,6 @@ private:
             return characters[distribution(generator)];
         });
         return random_string;
-    }
-
-    static std::string GenerateNewSecret(std::string&& new_secret_str, uint64_t length) {
-        Hmac hmac(new_secret_str);
-
-        return hmac.Sign(std::move(GenRandStr(length)));
     }
 };
 
