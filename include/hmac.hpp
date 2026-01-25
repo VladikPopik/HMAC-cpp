@@ -1,4 +1,5 @@
 #pragma once
+
 #include "codec.hpp"
 #include <iostream>
 #include <openssl/crypto.h>
@@ -13,10 +14,10 @@ struct EncodeResult {
   unsigned int len;
 };
 
-class HmacService {
+class Hmac {
 
 public:
-  explicit HmacService(const std::string &secret) : secret_(secret) {}
+  explicit Hmac(const std::string &secret) : secret_(secret) {}
 
   std::string Sign(std::string &&msg) const {
     EncodeResult encoded = HmacEncode(msg);
