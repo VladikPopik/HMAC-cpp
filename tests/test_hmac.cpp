@@ -23,36 +23,36 @@ protected:
   std::vector<std::string> test_vector_msgs_{"hello", "world", "Vlad", "test_signature", "qwerqewtqwtqwt", "123nlk12nl12d1", "XasDAX2AFaFFOASFAX"};
 };
 
-TEST_F(TestFixture, TestSignVerify) {
+TEST_F(TestFixture, TestSignVerifyUnit) {
 
-  auto sig = hmac_.Sign("hello");
+  auto sig = hmac_.Sign(std::string("hello").c_str(), 5);
 
-  auto is_ok = hmac_.Verify("hello", std::move(sig));
+  auto is_ok = hmac_.Verify("hello", std::move(sig), 5);
 
   ASSERT_TRUE(is_ok);
 
   sig.at(0) = sig.at(0) + 1;
 
-  is_ok = hmac_.Verify("hello", std::move(sig));
+  is_ok = hmac_.Verify("hello", std::move(sig), 5);
 
   ASSERT_TRUE(!is_ok);
 
-  sig = hmac_.Sign("hello");
+  sig = hmac_.Sign("hello", 5);
 
-  is_ok = hmac_.Verify("hello!", std::move(sig));
+  is_ok = hmac_.Verify("hello!", std::move(sig), 6);
 
   ASSERT_TRUE(!is_ok);
 
 }
 
-TEST_F(TestFixture, TestDetermenisticHmac) {
+TEST_F(TestFixture, TestDetermenisticHmacUnit) {
   std::string sig;
   bool is_ok;
   for (auto i = 0; i < 10000; ++i) {
     for (auto str : test_vector_msgs_) {
-      sig = hmac_.Sign(std::move(str));
+      sig = hmac_.Sign(std::move(str.c_str()), str.length());
 
-      is_ok = hmac_.Verify(std::move(str), std::move(sig));
+      is_ok = hmac_.Verify(std::move(str.c_str()), std::move(sig), str.length());
 
       ASSERT_TRUE(is_ok);
     }

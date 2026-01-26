@@ -22,19 +22,19 @@ async def run_(max_try_load: int, number_load_sim_req: int) -> None:
     ) as pbar:
 
         for _ in range(max_try_load):
-            random_strs = [generate_random_msg() for _ in range(100)]
+            random_strs = [generate_random_msg() for _ in range(number_load_sim_req)]
 
             async with httpx.AsyncClient() as client:
                 tmp = [
                     asyncio.create_task(
                         client.get("http://localhost:8080/ping")
                     )
-                    for _ in range(100)
+                    for _ in range(number_load_sim_req)
                 ]
 
                 ping = await asyncio.gather(*tmp)
                 ping_body = [r.json() for r in ping]
-                assert all([p["status"] == "ALIVE" for p in ping_body])
+                assert all([p["status"] for p in ping_body])
 
             pbar.update()
 
@@ -46,7 +46,7 @@ async def run_(max_try_load: int, number_load_sim_req: int) -> None:
                             json={"msg": random_strs[i]},
                         )
                     )
-                    for i in range(100)
+                    for i in range(number_load_sim_req)
                 ]
 
                 sign = await asyncio.gather(*tmp)

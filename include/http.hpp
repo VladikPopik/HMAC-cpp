@@ -24,7 +24,6 @@ public:
         listener_ = http_listener(config_.GetListen() + "/ping");
         listener_sign_ = http_listener(config_.GetListen() + "/sign");
         listener_verify_ = http_listener(config_.GetListen() + "/verify");
-
         
         setup_endpoints();
 
@@ -50,6 +49,34 @@ private:
     std::atomic<int> request_count_{0};
     Config config_;
     
+    struct IsValid {
+        status_code code;
+        json::value error;
+    };
+
+    bool isValidBase64Url(const std::string& s) {
+        if (s.empty()) return true;
+
+        for (char c : s) {
+            if (!std::isalnum(c) && c != '-' && c != '_' && c != '=') {
+                return false;
+            }
+        }
+
+        if (s.length() % 4 == 1) return false;
+        return true;
+    }
+
+    IsValid ValidateMsg(const std::string& msg) {
+
+        if (msg.length() > config_.GetMaxSizeBytes()) {
+            json::value error;
+            error[U("error")] = json::value::string(U("invalid_msg"));
+            return {status_codes::RequestEntityTooLarge, error};
+        }
+
+        return {status_codes::OK, {}};
+    }
 
     void setup_endpoints() {
 
@@ -83,7 +110,7 @@ private:
 
         json::value response_body;
 
-        response_body[U("status")] = json::value::string(U("ALIVE"));
+        response_body[U("status")] = json::value::boolean(true);
         response.set_body(response_body);
         request.reply(response);
         logger.info("Ping handled successfully");
@@ -91,8 +118,7 @@ private:
             logger.error("Exception in ping handler: " + std::string(e.what()));
                 
             json::value error;
-            error[U("error")] = json::value::string(U("Internal server error"));
-            error[U("message")] = json::value::string(utility::conversions::to_string_t(e.what()));
+            error[U("error")] = json::value::string(U("internal"));
             
             request.reply(status_codes::InternalError, error);
         }
@@ -101,16 +127,63 @@ private:
     void handle_sign(http_request request) {
         Logger logger(config_.GetLogLevel());
 
+        if (!request.headers().has(U("Content-Type")) ||
+            request.headers()[U("Content-Type")].find(U("application/json")) == utility::string_t::npos) {
+            json::value error;
+            error[U("error")] = json::value::string(U("invalid_json"));
+            request.reply(
+                status_codes::UnsupportedMediaType, 
+                error
+            );
+            return;
+        }
+
         try {
             request.extract_json()
             .then([&](json::value body) {
+
+                if (body.is_null()) {
+                    json::value error;
+                    error[U("error")] = json::value::string(U("invalid_msg"));
+                    request.reply(
+                        status_codes::BadRequest, 
+                        error
+                    );
+                    return;
+                }
+                
+                if (!body.has_field(U("msg"))) {
+                    json::value error;
+                    error[U("error")] = json::value::string(U("invalid_msg"));
+                    request.reply(status_codes::BadRequest, error);
+                    return;
+                }
+
                 auto msg = body.at(U("msg")).as_string();
+
+                IsValid is_valid;
+
+                if (!isValidBase64Url(msg)) {
+                    json::value error;
+                    error[U("error")] = json::value::string(U("invalid_signature_format"));
+                    is_valid = {status_codes::BadRequest, error};
+                }
+
+                is_valid = ValidateMsg(msg);
+
+                if (is_valid.code != status_codes::OK) {
+                    request.reply(is_valid.code, is_valid.error);
+                    return;
+                }
+
+                auto msg_utf = msg.c_str();
+                auto msg_length = msg.length();
 
                 auto secret = config_.GetSecret();
 
                 auto hmac = Hmac(secret);
 
-                auto sig = hmac.Sign(std::move(msg));
+                auto sig = hmac.Sign(msg_utf, msg_length);
 
                 json::value response;
                 response[U("signature")] = json::value::string(sig);
@@ -124,8 +197,7 @@ private:
             logger.error("Exception in sign handler: " + std::string(e.what()));
                 
             json::value error;
-            error[U("error")] = json::value::string(U("Internal server error"));
-            error[U("message")] = json::value::string(utility::conversions::to_string_t(e.what()));
+            error[U("error")] = json::value::string(U("internal"));
             
             request.reply(status_codes::InternalError, error);
         }
@@ -135,17 +207,55 @@ private:
     void handle_verify(http_request request) {
         Logger logger(config_.GetLogLevel());
 
+        if (!request.headers().has(U("Content-Type")) ||
+            request.headers()[U("Content-Type")].find(U("application/json")) == utility::string_t::npos) {
+            json::value error;
+            error[U("error")] = json::value::string(U("invalid_json"));
+            request.reply(status_codes::UnsupportedMediaType, 
+                        error);
+            return;
+        }
+
         try {
             request.extract_json()
             .then([&](json::value body) {
+
+                if (body.is_null()) {
+                    request.reply(status_codes::BadRequest, 
+                                json::value::string(U("invalid_msg")));
+                    return;
+                }
+                
+                if (!body.has_field(U("msg")) || !body.has_field(U("signature"))) {
+                    json::value error;
+                    error[U("error")] = json::value::string(U("invalid_msg"));
+                    request.reply(status_codes::BadRequest, error);
+                    return;
+                }
+        
+
                 auto msg = body.at(U("msg")).as_string();
                 auto sig = body.at(U("signature")).as_string();
+
+                auto is_valid = ValidateMsg(msg);
+
+                if (is_valid.code != status_codes::OK) {
+                    request.reply(is_valid.code, is_valid.error);
+                    return;
+                }
+
+                is_valid = ValidateMsg(sig);
+
+                if (is_valid.code != status_codes::OK) {
+                    request.reply(is_valid.code, is_valid.error);
+                    return;
+                }
                 
                 auto secret = config_.GetSecret();
 
                 auto hmac = Hmac(secret);
 
-                auto is_ok = hmac.Verify(std::move(msg), std::move(sig));
+                auto is_ok = hmac.Verify(msg.c_str(), std::move(sig), msg.length());
 
                 json::value response;
                 response[U("ok")] = json::value::boolean(is_ok);
@@ -155,13 +265,15 @@ private:
             .wait();
             logger.info("Verify handled successfully");
             
-        }catch (const std::exception& e) {
+        } catch (const json::json_exception& e) {
+            request.reply(status_codes::UnsupportedMediaType, json::value::string(U("invalid_json")));
+            return;
+        }
+        catch (const std::exception& e) {
             logger.error("Exception in sign handler: " + std::string(e.what()));
                 
             json::value error;
-            error[U("error")] = json::value::string(U("Internal server error"));
-            error[U("message")] = json::value::string(utility::conversions::to_string_t(e.what()));
-            
+            error[U("error")] = json::value::string(U("internal"));
             request.reply(status_codes::InternalError, error);
         }
     }

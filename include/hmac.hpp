@@ -19,18 +19,14 @@ class Hmac {
 public:
   explicit Hmac(const std::string &secret) : secret_(secret) {}
 
-  std::string Sign(std::string &&msg) const {
-    EncodeResult encoded = HmacEncode(msg);
+  std::string Sign(const char* msg, size_t length) const {
+    EncodeResult encoded = HmacEncode(msg, length);
     return Codec::SigToBase64Url(encoded.sig, encoded.len);
   }
 
-  bool Verify(std::string &&msg, std::string &&sig) const {
+  bool Verify(const char* msg, std::string &&sig, size_t length) const {
 
-    if (msg.empty()) {
-      return false;
-    }
-
-    std::string hash_msg(Sign(std::move(msg)));
+    std::string hash_msg(Sign(std::move(msg), length));
 
     if (hash_msg.length() != sig.length()) {
       return false;
@@ -45,13 +41,13 @@ public:
 private:
   std::string secret_;
 
-  EncodeResult HmacEncode(std::string data) const {
+  EncodeResult HmacEncode(const char* data, size_t length) const {
     unsigned int len = 0;
     unsigned char out[EVP_MAX_MD_SIZE];
 
-    return {HMAC(EVP_sha256(), secret_.c_str(), static_cast<int>(data.length()),
-                 reinterpret_cast<const unsigned char *>(data.c_str()),
-                 static_cast<int>(data.size()), out, &len),
+    return {HMAC(EVP_sha256(), secret_.c_str(), static_cast<int>(secret_.length()),
+                 reinterpret_cast<const unsigned char *>(data),
+                 static_cast<int>(length), out, &len),
             len};
   }
 };
