@@ -37,7 +37,7 @@ curl -sS -X POST http://localhost:8080/sign \
   -d '{"msg":"hello"}'
 ```
 
-# Пример вызова verify
+# Пример вызова verify/
 ```shell
 curl -sS -X POST http://localhost:8080/verify \
   -H 'Content-Type: application/json' \

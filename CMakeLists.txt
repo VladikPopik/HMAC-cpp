@@ -39,7 +39,46 @@ target_link_libraries(rotate-secret
         nlohmann_json::nlohmann_json
 )
 
-if(BUILD_TESTS)
-# Add tests
+option(BUILD_TESTS "Build tests" ON)
 
+if(BUILD_TESTS)
+    enable_testing()
+    
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0 
+    )
+    
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    
+    FetchContent_MakeAvailable(googletest)
+    
+    add_executable(tests
+        tests/test_hmac.cpp
+        src/hmac_service/config.cpp
+    )
+    
+    target_link_libraries(tests
+        PRIVATE
+        gtest_main
+        gmock
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        nlohmann_json::nlohmann_json
+        cpprestsdk::cpprest
+    )
+    
+    target_include_directories(tests PRIVATE
+        src/hmac_service/
+        include/
+    )
+    
+    add_test(NAME UnitTests COMMAND tests)
+    
+    set_target_properties(tests PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+    )
 endif()

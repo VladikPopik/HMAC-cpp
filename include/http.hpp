@@ -103,10 +103,12 @@ private:
 
         try {
             request.extract_json()
-            .then([=](json::value body) {
+            .then([&](json::value body) {
                 auto msg = body.at(U("msg")).as_string();
 
-                auto hmac = Hmac(config_.GetSecret());
+                auto secret = config_.GetSecret();
+
+                auto hmac = Hmac(secret);
 
                 auto sig = hmac.Sign(std::move(msg));
 
@@ -117,6 +119,7 @@ private:
 
             })
             .wait();
+            logger.info("Sign handled successfully");
         }catch (const std::exception& e) {
             logger.error("Exception in sign handler: " + std::string(e.what()));
                 
@@ -126,7 +129,6 @@ private:
             
             request.reply(status_codes::InternalError, error);
         }
-        logger.info("Sign handled successfully");
 
     }
 
@@ -135,11 +137,13 @@ private:
 
         try {
             request.extract_json()
-            .then([=](json::value body) {
+            .then([&](json::value body) {
                 auto msg = body.at(U("msg")).as_string();
                 auto sig = body.at(U("signature")).as_string();
+                
+                auto secret = config_.GetSecret();
 
-                auto hmac = Hmac(config_.GetSecret());
+                auto hmac = Hmac(secret);
 
                 auto is_ok = hmac.Verify(std::move(msg), std::move(sig));
 
@@ -149,6 +153,8 @@ private:
                 request.reply(status_codes::OK, response);
             })
             .wait();
+            logger.info("Verify handled successfully");
+            
         }catch (const std::exception& e) {
             logger.error("Exception in sign handler: " + std::string(e.what()));
                 
@@ -158,9 +164,7 @@ private:
             
             request.reply(status_codes::InternalError, error);
         }
-        logger.info("Verify handled successfully");
     }
-    
 };
 
 }

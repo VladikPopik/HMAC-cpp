@@ -2,7 +2,6 @@
 #include "logging.hpp"
 #include "http.hpp"
 #include <fstream>
-#include <iostream>
 
 using namespace service::micro;
 using namespace service::logging;
@@ -21,7 +20,7 @@ int main(int argc, char *argv[]) {
     service.start();
 
     try {
-    while (true) { }
+      while (true) { }
     } catch (std::exception& e) {
         service.stop();
     }

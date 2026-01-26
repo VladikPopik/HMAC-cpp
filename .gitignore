@@ -1,2 +1,8 @@
 build/
 .vscode/
+*venv/
+debug
+info
+warn
+error
+Testing/
