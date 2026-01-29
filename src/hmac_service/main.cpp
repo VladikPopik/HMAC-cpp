@@ -2,6 +2,7 @@
 #include "logging.hpp"
 #include "http.hpp"
 #include <fstream>
+#include <filesystem>
 
 using namespace service::micro;
 using namespace service::logging;
@@ -12,10 +13,13 @@ int main(int argc, char *argv[]) {
       return 1;
   }
 
-  std::string fpath = argv[1];
-  std::fstream fs(fpath);
+  std::string str_path = argv[1];
 
-  Service service(fs);
+  std::filesystem::path fpath(str_path);
+
+  fpath = std::filesystem::absolute(fpath);
+
+  Service service(fpath);
 
     service.start();
 

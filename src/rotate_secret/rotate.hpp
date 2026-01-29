@@ -2,16 +2,24 @@
 #include <fstream>
 #include <iostream>
 #include "hmac.hpp"
-#include "codec.hpp"
 #include <random>
 #include <algorithm>
 #include <nlohmann/json.hpp>
 #include <ostream>
+#include <filesystem>
 
 
 namespace crypto {
 
 using namespace service::hmac;
+
+namespace fs = std::filesystem;
+
+
+enum Mode {
+    READ_WRITE,
+    READ
+};
 
 class Rotate {
 public:
@@ -19,6 +27,40 @@ public:
 
 private:
     using json = nlohmann::json;
+
+
+    static void SetupPermissions(const std::string& fpath, Mode mode) {
+        switch (mode)
+        {
+        case Mode::READ_WRITE:
+            try {
+                fs::permissions(fpath, 
+                                fs::perms::owner_read | fs::perms::owner_write,
+                                fs::perm_options::replace);
+
+                std::cout << "Permissions set successfully for the owner." << std::endl;
+
+            } catch (fs::filesystem_error const& ex) {
+                std::cerr << "Error changing permissions: " << ex.what() << std::endl;
+            }
+            break;
+
+        case Mode::READ:
+            try {
+                fs::permissions(fpath, 
+                                fs::perms::owner_read,
+                                fs::perm_options::replace);
+
+                std::cout << "Permissions set successfully for the owner." << std::endl;
+
+            } catch (fs::filesystem_error const& ex) {
+                std::cerr << "Error changing permissions: " << ex.what() << std::endl;
+            }
+            break;
+        default:
+            break;
+        }
+    }
 
 
     static std::string GenRandStr(size_t length) {

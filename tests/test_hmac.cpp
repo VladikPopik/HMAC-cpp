@@ -10,8 +10,7 @@ protected:
   ~TestFixture() = default;
 
   service::config::Config ReadStream() {
-    std::fstream fs("./config.json");
-    return service::config::Config(fs);
+    return service::config::Config("./config.json");
   }
 
   service::hmac::Hmac CreateHmac() {

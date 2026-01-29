@@ -8,7 +8,7 @@ namespace service::config {
 
 class Config {
 public:
-  explicit Config(std::fstream &fs);
+  explicit Config(const std::string &fpath);
 
   ~Config();
 

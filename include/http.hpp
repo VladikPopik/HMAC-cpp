@@ -20,7 +20,7 @@ using namespace service::hmac;
 class Service {
 
 public:
-    Service(std::fstream& fs) : config_(Config(fs)) {
+    Service(const std::string& config_path) : config_path_(config_path), config_(Config(config_path_)) {
         listener_ = http_listener(config_.GetListen() + "/ping");
         listener_sign_ = http_listener(config_.GetListen() + "/sign");
         listener_verify_ = http_listener(config_.GetListen() + "/verify");
@@ -47,6 +47,7 @@ private:
     http_listener listener_verify_;
 
     std::atomic<int> request_count_{0};
+    std::string config_path_;
     Config config_;
     
     struct IsValid {
@@ -127,6 +128,8 @@ private:
     void handle_sign(http_request request) {
         Logger logger(config_.GetLogLevel());
 
+        config_ = Config(config_path_);
+
         if (!request.headers().has(U("Content-Type")) ||
             request.headers()[U("Content-Type")].find(U("application/json")) == utility::string_t::npos) {
             json::value error;
@@ -206,6 +209,8 @@ private:
 
     void handle_verify(http_request request) {
         Logger logger(config_.GetLogLevel());
+
+        config_ = Config(config_path_);
 
         if (!request.headers().has(U("Content-Type")) ||
             request.headers()[U("Content-Type")].find(U("application/json")) == utility::string_t::npos) {

@@ -1,5 +1,3 @@
-#include <fstream>
-#include <iostream>
 #include <stdlib.h>
 #include "rotate.hpp"
 
@@ -7,7 +5,7 @@ using namespace crypto;
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-      std::cout << "Invalid args, please specify config filepath, new secret key and length" << "\n";
+      std::cout << "Invalid args, please specify config filepath and length" << "\n";
       return 1;
   }
 

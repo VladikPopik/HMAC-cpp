@@ -6,14 +6,13 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <utility>
-
 namespace service::config {
 
 using namespace service::codec;
 
 class Config::Impl {
 public:
-  explicit Impl(std::fstream &fs) : fs_(fs) { ReadStream(); }
+  explicit Impl(const std::string &fpath) : config_path_(fpath) { ReadStream(); }
 
   ~Impl() = default;
 
@@ -24,17 +23,19 @@ public:
   Impl &operator=(Impl &&) noexcept = delete;
 
   void ReadStream() {
-    if (!fs_.is_open() && is_loaded_) {
+    std::fstream fs(config_path_);
+
+    if (!fs.is_open()) {
       return;
     }
 
-    json data_ = json::parse(fs_);
+    json data_ = json::parse(fs);
     body_ = ConfigBody(data_["hmac_alg"].get<std::string>(),
                        data_["listen"].get<std::string>(),
                        data_["log_level"].get<std::string>(),
                        data_["max_msg_size_bytes"].get<uint32_t>(),
                        Codec::ToBase64Url(data_["secret"].get<std::string>()));
-    fs_.close();
+    fs.close();
   }
 
   std::string GetAlg() const { return body_.hmac_algo_; }
@@ -62,11 +63,10 @@ private:
   using json = nlohmann::json;
 
   ConfigBody body_{{}, {}, {}, {}, {}};
-  bool is_loaded_ = false;
-  std::fstream &fs_;
+  std::string config_path_;
 };
 
-Config::Config(std::fstream &fs) : pImpl(std::make_unique<Impl>(fs)) {}
+Config::Config(const std::string& fpath) : pImpl(std::make_unique<Impl>(fpath)) {}
 
 Config::~Config() = default;
 
