@@ -19,7 +19,9 @@ int main(int argc, char *argv[]) {
 
   fpath = std::filesystem::absolute(fpath);
 
-  Service service(fpath);
+  Config config (fpath);
+
+  Service service(std::move(config), fpath);
 
     service.start();
 

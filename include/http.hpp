@@ -20,7 +20,7 @@ using namespace service::hmac;
 class Service {
 
 public:
-    Service(const std::string& config_path) : config_path_(config_path), config_(Config(config_path_)) {
+    Service(Config&& config, std::string config_path) : config_(std::move(config)), config_path_(config_path) {
         listener_ = http_listener(config_.GetListen() + "/ping");
         listener_sign_ = http_listener(config_.GetListen() + "/sign");
         listener_verify_ = http_listener(config_.GetListen() + "/verify");
@@ -47,7 +47,8 @@ private:
     http_listener listener_verify_;
 
     std::atomic<int> request_count_{0};
-    std::string config_path_;
+
+    std::filesystem::path config_path_;
     Config config_;
     
     struct IsValid {

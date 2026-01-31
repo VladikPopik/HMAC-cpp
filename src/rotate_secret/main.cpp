@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
       return 1;
   }
 
-  std::string fpath = argv[1];
+  fs::path fpath = argv[1];
   int length = std::atoi(argv[2]);
 
   Rotate::UpdateConfig(std::move(fpath), length);
