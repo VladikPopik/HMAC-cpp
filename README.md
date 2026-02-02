@@ -32,9 +32,7 @@ sudo apt-get install libssl-dev libcpprest-dev nlohmann-json3-dev
 
 # Пример вызова метода sing/
 ```shell
-curl -sS -X POST http://localhost:8080/sign \  
-  -H 'Content-Type: application/json' \
-  -d '{"msg":"hello"}'
+curl -sS -X POST http://localhost:8080/sign -H 'Content-Type: application/json' -d '{"msg":"hello"}'
 ```
 
 # Пример вызова verify/

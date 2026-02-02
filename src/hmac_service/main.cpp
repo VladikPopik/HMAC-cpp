@@ -9,7 +9,7 @@ using namespace service::logging;
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-      std::cerr << "Invalid args, please specify config file path" << "\n";
+      LOG_ERROR(Logger(), "Invalid args, please specify config file path");
       return 1;
   }
 
@@ -21,9 +21,13 @@ int main(int argc, char *argv[]) {
 
   Config config (fpath);
 
+  {
+    LOG_INFO(Logger(), "Starting service...");
+  }
+
   Service service(std::move(config), fpath);
 
-    service.start();
+  service.start();
 
     try {
       while (true) { }

@@ -57,7 +57,10 @@ if(BUILD_TESTS)
     
     add_executable(tests
         tests/test_hmac.cpp
+        src/hmac_service/main.cpp
         src/hmac_service/config.cpp
+        src/hmac_service/http.cpp
+        src/hmac_service/logging.cpp
     )
     
     target_link_libraries(tests

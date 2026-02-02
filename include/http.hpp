@@ -62,7 +62,7 @@ private:
     bool isValidBase64Url(const std::string& s) {
         if (s.empty()) return true;
 
-        std::regex pattern("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$");
+        std::regex pattern("^([A-Za-z0-9+/]{4}))?$");
 
         auto match = std::regex_match(s, pattern);
 
@@ -87,37 +87,41 @@ private:
 
     void setup_endpoints() {
 
-        Logger logger(config_.GetLogLevel());
-
         listener_ping_.support(methods::GET, [this](http_request request) {
             return handle_ping(std::move(request));
         });
 
-        logger.info("Method GET ping/");
+        {
+            LOG_INFO(Logger(), "Method GET ping/");
+        }
 
         listener_settings_.support(methods::GET, [this](http_request request) {
             return handle_settings_update(std::move(request));
         });
 
-        logger.info("Method GET settings/");
-        
+        {
+            LOG_INFO(Logger(), "Method GET settings/");
+        }
+
 
         listener_sign_.support(methods::POST, [this](http_request request) {
             handle_sign(std::move(request));
         });
 
-        logger.info("Method POST sign/");
-        
+        {
+            LOG_INFO(Logger(), "Method POST sign/");
+        }
+
         listener_verify_.support(methods::POST, [this](http_request request) {
             handle_verify(std::move(request));
         });
 
-        logger.info("Method POST verify/");
+        {
+            LOG_INFO(Logger(), "Method POST verify/");
+        }
     }
     
     void handle_ping(http_request request) {
-        Logger logger(config_.GetLogLevel());
-
         try {
         
         http_response response(200);
@@ -127,9 +131,11 @@ private:
         response_body[U("status")] = json::value::boolean(true);
         response.set_body(response_body);
         request.reply(response);
-        logger.info("Ping handled successfully");
+        {
+            LOG_INFO(Logger(), "Ping handled successfully");
+        }
         } catch (const std::exception& e) {
-            logger.error("Exception in settings handler: " + std::string(e.what()));
+            LOG_ERROR(Logger(), "Exception in settings handler: " + std::string(e.what()));
                 
             json::value error;
             error[U("error")] = json::value::string(U("internal"));
@@ -139,8 +145,6 @@ private:
     }
 
     void handle_settings_update(http_request request) {
-        Logger logger(config_.GetLogLevel());
-
         try {
             http_response response(200);
             json::value response_body;
@@ -150,9 +154,13 @@ private:
             response_body[U("status")] = json::value::boolean(true);
             response.set_body(response_body);
             request.reply(response);
-            logger.info("Settings update handled successfully");
+            {
+                LOG_INFO(Logger(), "Settings update handled successfully");
+            }
         } catch (const std::exception& e) {
-            logger.error("Exception in ping handler: " + std::string(e.what()));
+            {
+                LOG_ERROR(Logger(), "Exception in ping handler: " + std::string(e.what()));
+            }
                 
             json::value error;
             error[U("error")] = json::value::string(U("internal"));
@@ -162,8 +170,6 @@ private:
     }
 
     void handle_sign(http_request request) {
-        Logger logger(config_.GetLogLevel());
-
         if (!request.headers().has(U("Content-Type")) ||
             request.headers()[U("Content-Type")].find(U("application/json")) == utility::string_t::npos) {
             json::value error;
@@ -229,9 +235,13 @@ private:
 
             })
             .wait();
-            logger.info("Sign handled successfully");
+            {
+                LOG_INFO(Logger(), "Sign handled successfully");
+            }
         }catch (const std::exception& e) {
-            logger.error("Exception in sign handler: " + std::string(e.what()));
+            {
+                LOG_ERROR(Logger(), "Exception in sign handler: " + std::string(e.what()));
+            }
                 
             json::value error;
             error[U("error")] = json::value::string(U("internal"));
@@ -242,8 +252,6 @@ private:
     }
 
     void handle_verify(http_request request) {
-        Logger logger(config_.GetLogLevel());
-
         if (!request.headers().has(U("Content-Type")) ||
             request.headers()[U("Content-Type")].find(U("application/json")) == utility::string_t::npos) {
             json::value error;
@@ -300,14 +308,17 @@ private:
                 request.reply(status_codes::OK, response);
             })
             .wait();
-            logger.info("Verify handled successfully");
-            
+            {
+                LOG_INFO(Logger(), "Verify handled successfully");
+            }
         } catch (const json::json_exception& e) {
             request.reply(status_codes::UnsupportedMediaType, json::value::string(U("invalid_json")));
             return;
         }
         catch (const std::exception& e) {
-            logger.error("Exception in sign handler: " + std::string(e.what()));
+            {
+                LOG_ERROR(Logger(), "Exception in sign handler: " + std::string(e.what()));
+            }
                 
             json::value error;
             error[U("error")] = json::value::string(U("internal"));
