@@ -6,6 +6,7 @@
 #include "logging.hpp"
 #include "config.hpp"
 #include "hmac.hpp"
+#include <regex>
 
 namespace service::micro {
 
@@ -21,7 +22,8 @@ class Service {
 
 public:
     Service(Config&& config, std::string config_path) : config_(std::move(config)), config_path_(config_path) {
-        listener_ = http_listener(config_.GetListen() + "/ping");
+        listener_ping_ = http_listener(config_.GetListen() + "/ping");
+        listener_settings_ = http_listener(config_.GetListen() + "/settings");
         listener_sign_ = http_listener(config_.GetListen() + "/sign");
         listener_verify_ = http_listener(config_.GetListen() + "/verify");
         
@@ -42,7 +44,8 @@ public:
     void stop();
     
 private:
-    http_listener listener_;
+    http_listener listener_ping_;
+    http_listener listener_settings_;
     http_listener listener_sign_;
     http_listener listener_verify_;
 
@@ -59,10 +62,12 @@ private:
     bool isValidBase64Url(const std::string& s) {
         if (s.empty()) return true;
 
-        for (char c : s) {
-            if (!std::isalnum(c) && c != '-' && c != '_' && c != '=') {
-                return false;
-            }
+        std::regex pattern("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$");
+
+        auto match = std::regex_match(s, pattern);
+
+        if (!match) {
+            return false;
         }
 
         if (s.length() % 4 == 1) return false;
@@ -84,11 +89,18 @@ private:
 
         Logger logger(config_.GetLogLevel());
 
-        listener_.support(methods::GET, [this](http_request request) {
+        listener_ping_.support(methods::GET, [this](http_request request) {
             return handle_ping(std::move(request));
         });
 
         logger.info("Method GET ping/");
+
+        listener_settings_.support(methods::GET, [this](http_request request) {
+            return handle_settings_update(std::move(request));
+        });
+
+        logger.info("Method GET settings/");
+        
 
         listener_sign_.support(methods::POST, [this](http_request request) {
             handle_sign(std::move(request));
@@ -117,7 +129,7 @@ private:
         request.reply(response);
         logger.info("Ping handled successfully");
         } catch (const std::exception& e) {
-            logger.error("Exception in ping handler: " + std::string(e.what()));
+            logger.error("Exception in settings handler: " + std::string(e.what()));
                 
             json::value error;
             error[U("error")] = json::value::string(U("internal"));
@@ -126,10 +138,31 @@ private:
         }
     }
 
-    void handle_sign(http_request request) {
+    void handle_settings_update(http_request request) {
         Logger logger(config_.GetLogLevel());
 
-        config_ = Config(config_path_);
+        try {
+            http_response response(200);
+            json::value response_body;
+
+            config_ = Config(config_path_);
+
+            response_body[U("status")] = json::value::boolean(true);
+            response.set_body(response_body);
+            request.reply(response);
+            logger.info("Settings update handled successfully");
+        } catch (const std::exception& e) {
+            logger.error("Exception in ping handler: " + std::string(e.what()));
+                
+            json::value error;
+            error[U("error")] = json::value::string(U("internal"));
+            
+            request.reply(status_codes::InternalError, error);
+        }        
+    }
+
+    void handle_sign(http_request request) {
+        Logger logger(config_.GetLogLevel());
 
         if (!request.headers().has(U("Content-Type")) ||
             request.headers()[U("Content-Type")].find(U("application/json")) == utility::string_t::npos) {
@@ -210,8 +243,6 @@ private:
 
     void handle_verify(http_request request) {
         Logger logger(config_.GetLogLevel());
-
-        config_ = Config(config_path_);
 
         if (!request.headers().has(U("Content-Type")) ||
             request.headers()[U("Content-Type")].find(U("application/json")) == utility::string_t::npos) {

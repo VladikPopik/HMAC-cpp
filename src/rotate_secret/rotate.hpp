@@ -16,11 +16,6 @@ using namespace service::hmac;
 namespace fs = std::filesystem;
 
 
-enum Mode {
-    READ_WRITE,
-    READ
-};
-
 class Rotate {
 public:
     static void UpdateConfig(const std::string& fpath, uint64_t length);
@@ -29,37 +24,14 @@ private:
     using json = nlohmann::json;
 
 
-    static void SetupPermissions(const std::string& fpath, Mode mode) {
-        switch (mode)
-        {
-        case Mode::READ_WRITE:
+    static void SetupPermissions(const std::string& fpath) {
             try {
                 fs::permissions(fpath, 
                                 fs::perms::owner_read | fs::perms::owner_write,
                                 fs::perm_options::replace);
-
-                std::cout << "Permissions set successfully for the owner." << std::endl;
-
             } catch (fs::filesystem_error const& ex) {
                 std::cerr << "Error changing permissions: " << ex.what() << std::endl;
             }
-            break;
-
-        case Mode::READ:
-            try {
-                fs::permissions(fpath, 
-                                fs::perms::owner_read,
-                                fs::perm_options::replace);
-
-                std::cout << "Permissions set successfully for the owner." << std::endl;
-
-            } catch (fs::filesystem_error const& ex) {
-                std::cerr << "Error changing permissions: " << ex.what() << std::endl;
-            }
-            break;
-        default:
-            break;
-        }
     }
 
 

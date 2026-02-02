@@ -39,12 +39,15 @@ curl -sS -X POST http://localhost:8080/sign \
 
 # Пример вызова verify/
 ```shell
-curl -sS -X POST http://localhost:8080/verify \
-  -H 'Content-Type: application/json' \
-  -d '{"msg":"hello","signature":"<скопировать из /sign>"}'
+curl -sS -X POST http://localhost:8080/verify -H 'Content-Type: application/json' -d '{"msg":"hello","signature":"<скопировать из /sign>"}'
 ```
 
-# Пример вызова ping/
+# Пример вызова ping/ (Health check)
 ```shell
-curl -sS -X GET http://localhost:8080/ping -H 'Content-Type: application/json'
+curl -sS -X GET http://localhost:8080/ping
+```
+
+# Пример вызова settings/ (Config Update)
+```shell
+curl -sS -X GET http://localhost:8080/settings
 ```

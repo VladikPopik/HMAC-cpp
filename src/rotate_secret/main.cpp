@@ -5,7 +5,7 @@ using namespace crypto;
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-      std::cout << "Invalid args, please specify config filepath and length" << "\n";
+      std::cerr << "\033[31m" << "Invalid args, please specify config filepath and desired length of new secret" << "\n";
       return 1;
   }
 

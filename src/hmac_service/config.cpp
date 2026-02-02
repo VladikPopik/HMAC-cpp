@@ -28,6 +28,7 @@ public:
     std::fstream fs(config_path_);
 
     if (!fs.is_open()) {
+      std::cerr << "\nConfig is not read with path: " << config_path_ << "\n";
       return;
     }
 

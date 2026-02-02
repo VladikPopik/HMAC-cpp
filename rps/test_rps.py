@@ -66,7 +66,7 @@ async def run_(max_try_load: int, number_load_sim_req: int) -> None:
                             },
                         )
                     )
-                    for i in range(100)
+                    for i in range(number_load_sim_req)
                 ]
 
                 verify = await asyncio.gather(*tmp)
@@ -78,6 +78,7 @@ async def run_(max_try_load: int, number_load_sim_req: int) -> None:
                 assert all(res)
 
             pbar.update()
+            await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
