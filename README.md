@@ -28,9 +28,9 @@ sudo apt-get install libssl-dev libcpprest-dev nlohmann-json3-dev
 
 Скрипт автосборки через скрипт ./build.sh 
 
-Запуск сервиса через ./build/hmac_service <path-to-config>
+Запуск сервиса через ./build/hmac_service path-to-config
 
-# Пример вызова метода sing/
+# Пример вызова метода sign/
 ```shell
 curl -sS -X POST http://localhost:8080/sign -H 'Content-Type: application/json' -d '{"msg":"hello"}'
 ```
@@ -48,4 +48,20 @@ curl -sS -X GET http://localhost:8080/ping
 # Пример вызова settings/ (Config Update)
 ```shell
 curl -sS -X GET http://localhost:8080/settings
+```
+
+# Тесты
+```shell
+./build/test_hmac - Unittests
+./build/test_service - Service Layer Tests
+
+
+# Нагрузочный тест:
+cd rps/
+python3 -m venv test_env
+source test_env/bin/activate
+
+python3 -m pip install -r requirements.txt
+
+python3 test_rps.py 1 100 - RPS test with launched hmac_service
 ```
