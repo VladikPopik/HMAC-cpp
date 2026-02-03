@@ -11,28 +11,6 @@ namespace service::codec {
 
 class Codec {
 public:
-  static std::string ToBase64Url(const std::string &input) {
-    if (input.empty())
-      return {};
-
-    BIO *b64 = BIO_new(BIO_f_base64());
-    BIO *mem = BIO_new(BIO_s_mem());
-
-    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-    BIO_push(b64, mem);
-
-    BIO_write(b64, input.data(), static_cast<int>(input.length()));
-    BIO_flush(b64);
-
-    BUF_MEM *bufferPtr;
-    BIO_get_mem_ptr(mem, &bufferPtr);
-
-    std::string result(bufferPtr->data, bufferPtr->length);
-    BIO_free_all(b64);
-
-    return result;
-  }
-
   static std::string FromBase64Url(const std::string &input) {
     BIO *b64 = BIO_new(BIO_f_base64());
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -59,7 +37,7 @@ public:
     return output;
   }
 
-  static std::string SigToBase64Url(const unsigned char *sig, size_t len) {
+  static std::string ToBase64Url(const unsigned char *sig, size_t len) {
     std::string out(4 * ((len + 2) / 3), '\0');
     int n = EVP_EncodeBlock(reinterpret_cast<unsigned char *>(&out[0]), sig,
                             static_cast<int>(len));

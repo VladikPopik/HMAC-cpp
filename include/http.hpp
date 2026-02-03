@@ -54,6 +54,8 @@ private:
     std::filesystem::path config_path_;
     Config config_;
     
+    const std::regex regex_ = std::regex("(^[A-Za-z0-9\\-_]+$)");
+
     struct IsValid {
         status_code code;
         json::value error;
@@ -62,9 +64,7 @@ private:
     bool isValidBase64Url(const std::string& s) {
         if (s.empty()) return true;
 
-        std::regex pattern("^([A-Za-z0-9+/]{4}))?$");
-
-        auto match = std::regex_match(s, pattern);
+        auto match = std::regex_match(s, regex_);
 
         if (!match) {
             return false;
@@ -204,6 +204,13 @@ private:
 
                 auto msg = body.at(U("msg")).as_string();
 
+                if (msg.length() == 0) {
+                    json::value error;
+                    error[U("error")] = json::value::string(U("invalid_msg"));
+                    request.reply(status_codes::BadRequest, error);
+                    return;
+                }
+
                 IsValid is_valid;
 
                 if (!isValidBase64Url(msg)) {
@@ -290,6 +297,17 @@ private:
                 }
 
                 is_valid = ValidateMsg(sig);
+
+                if (is_valid.code != status_codes::OK) {
+                    request.reply(is_valid.code, is_valid.error);
+                    return;
+                }
+
+                if (!isValidBase64Url(sig)) {
+                    json::value error;
+                    error[U("error")] = json::value::string(U("invalid_signature_format"));
+                    is_valid = {status_codes::BadRequest, error};
+                }
 
                 if (is_valid.code != status_codes::OK) {
                     request.reply(is_valid.code, is_valid.error);

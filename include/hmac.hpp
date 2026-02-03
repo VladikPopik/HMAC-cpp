@@ -21,7 +21,7 @@ public:
 
   std::string Sign(const char* msg, size_t length) const {
     EncodeResult encoded = HmacEncode(msg, length);
-    return Codec::SigToBase64Url(encoded.sig, encoded.len);
+    return Codec::ToBase64Url(encoded.sig, encoded.len);
   }
 
   bool Verify(const char* msg, std::string &&sig, size_t length) const {

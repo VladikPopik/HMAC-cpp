@@ -33,11 +33,12 @@ public:
     }
 
     json data_ = json::parse(fs);
+    auto tmp = data_["secret"].get<std::string>();
     body_ = ConfigBody(data_["hmac_alg"].get<std::string>(),
                        data_["listen"].get<std::string>(),
                        data_["log_level"].get<std::string>(),
                        data_["max_msg_size_bytes"].get<uint32_t>(),
-                       Codec::ToBase64Url(data_["secret"].get<std::string>()));
+                       Codec::ToBase64Url(reinterpret_cast<const unsigned char*>(tmp.c_str()), tmp.length()));
     fs.close();
   }
 
