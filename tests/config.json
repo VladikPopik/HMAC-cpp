@@ -2,6 +2,7 @@
     "hmac_alg": "SHA256",
     "listen": "http://localhost:8081",
     "log_level": "INFO",
+    "log_file": "test_log.log",
     "max_msg_size_bytes": 1024,
     "secret": "my_test_secret_key_123"
 }

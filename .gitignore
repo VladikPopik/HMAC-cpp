@@ -6,3 +6,4 @@ info
 warn
 error
 Testing/
+*.log

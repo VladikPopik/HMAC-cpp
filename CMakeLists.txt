@@ -4,6 +4,10 @@ project(hmac_service VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_compile_options(
+    $<$<CXX_COMPILER_ID:Clang>:-Wall,-fsanitize=undefined,-O3>
+)
+
 find_package(GTest)
 find_package(cpprestsdk REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -56,6 +60,7 @@ target_include_directories(rotate-secret
 target_link_libraries(rotate-secret
     OpenSSL::Crypto
     nlohmann_json::nlohmann_json
+    hmac_service_lib
 )
 
 option(BUILD_TESTS "Build tests" ON)

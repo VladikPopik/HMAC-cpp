@@ -1,7 +1,8 @@
 {
     "hmac_alg": "SHA256",
     "listen": "http://localhost:8080",
+    "log_file": "log.log",
     "log_level": "debug",
     "max_msg_size_bytes": 1048576,
-    "secret": "jSQErsd1pj0UqE3JOHw6sDFcUvfrvDQVISJmIvp3eOmUafrvkdYWj6PUwfcPfCKS"
+    "secret": "ejHk73i0oJNs8TGU2SdHoxuzThSaErmM"
 }

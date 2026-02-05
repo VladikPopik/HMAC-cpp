@@ -1,9 +1,16 @@
 #include "rotate.hpp"
 
-namespace crypto {
+namespace crypto
+{
 
-    void Rotate::UpdateConfig(const std::string& fpath, uint64_t length) {
-        Rotate::SetupPermissions(fpath);
+    void Rotate::UpdateConfig(const std::string &fpath, uint64_t length)
+    {
+
+        SetupPermissions(fpath);
+
+        {
+            LOG_INFO(Logger("rotate.log"), "Permissions setup for owner");
+        }
 
         std::fstream fs(fpath);
 
@@ -11,9 +18,13 @@ namespace crypto {
 
         fs.close();
 
-        auto secret = Rotate::GenRandStr(length);
+        auto secret = GenRandStr(length);
 
         data_["secret"] = secret;
+
+        {
+            LOG_DEBUG(Logger(log_file_), "New secret generated");
+        }
 
         std::ofstream ofs(fpath);
 
@@ -23,5 +34,4 @@ namespace crypto {
 
         ofs.close();
     }
-
 }

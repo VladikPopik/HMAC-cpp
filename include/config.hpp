@@ -4,31 +4,34 @@
 #include <memory>
 #include <string>
 
-namespace service::config {
+namespace service::config
+{
 
-class Config {
-public:
-  explicit Config(const std::string &fpath);
+  class Config
+  {
+  public:
+    explicit Config(const std::string &fpath);
 
-  ~Config();
+    ~Config();
 
-  Config(const Config &) = delete;
-  Config &operator=(const Config &) = delete;
+    Config(const Config &) = delete;
+    Config &operator=(const Config &) = delete;
 
-  Config(Config &&) noexcept;
-  Config &operator=(Config &&) noexcept;
+    Config(Config &&) noexcept;
+    Config &operator=(Config &&) noexcept;
 
-  void ReadStream();
-  std::string GetAlg() const;
-  std::string GetListen() const;
-  std::string GetLogLevel() const;
-  uint32_t GetMaxSizeBytes() const;
-  std::string GetSecret() const;
+    void ReadStream();
+    std::string GetAlg() const;
+    std::string GetListen() const;
+    std::string GetLogLevel() const;
+    std::string GetLogFile() const;
+    uint32_t GetMaxSizeBytes() const;
+    std::string GetSecret() const;
 
-private:
-  struct Impl;
+  private:
+    struct Impl;
 
-  std::unique_ptr<Impl> pImpl;
-};
+    std::unique_ptr<Impl> pImpl;
+  };
 
 } // namespace service::config
