@@ -20,8 +20,9 @@ C++17, arm64.
 Запуск утилиты ротации секрета ./buil/rotate-secret path-to-config length-of-new-secret path-to-log-file 
 Результат исполнения утилиты - запись нового секрета в конфигурационный файл в поле `secret`. Промежуточные этапы записываются в указанный log-file.
 
-#Формат конфига
+# Формат конфига
 
+```json
 {
     "hmac_alg": "SHA256", // вид алгоритма
     "listen": "http://localhost:8080", // адрес сервиса и порт
@@ -30,7 +31,7 @@ C++17, arm64.
     "max_msg_size_bytes": 1048576, // максимальный размер сообщения
     "secret": "ejHk73i0oJNs8TGU2SdHoxuzThSaErmM" // секрет
 }
-
+```
 
 # Пример вызова метода sign/
 ```shell
