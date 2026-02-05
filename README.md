@@ -54,7 +54,7 @@ curl -sS -X GET http://localhost:8080/settings
 ```shell
 ./build/test_hmac - Unittests
 ./build/test_service - Service Layer Tests
-
+```
 
 # Нагрузочный тест:
 cd rps/
